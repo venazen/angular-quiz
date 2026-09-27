@@ -1,0 +1,7 @@
+{
+  "name": "angular-quiz",
+  "compatibility_date": "2026-09-26",
+  "assets": {
+    "directory": "./dist/angular-quiz/browser"
+  }
+}
