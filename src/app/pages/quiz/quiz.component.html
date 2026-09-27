@@ -3,7 +3,7 @@
     <div class="quiz">
       <div class="quiz-header">
         <a routerLink="/" class="back">← Nazad</a>
-        <span>{{ currentIndex() + 1 }} / {{ t.questions.length }}</span>
+        <span>{{ currentIndex() + 1 }} / {{ shuffledQuestions().length }}</span>
       </div>
 
       <div class="progress-bar">
@@ -41,15 +41,15 @@
     </div>
   } @else {
     <div class="result">
-      <h2>Rezultat: {{ correctCount() }} / {{ t.questions.length }} ({{ finalScorePercent() }}%)</h2>
+      <h2>Rezultat: {{ correctCount() }} / {{ shuffledQuestions().length }} ({{ finalScorePercent() }}%)</h2>
 
       <div class="result-actions">
-        <button (click)="retry()">Ponovi test</button>
+        <button (click)="retry()">Ponovi test (novi redoslijed)</button>
         <a routerLink="/" class="btn-link">Nazad na listu testova</a>
       </div>
 
       <div class="review-list">
-        @for (q of t.questions; track q.id; let i = $index) {
+        @for (q of shuffledQuestions(); track q.id; let i = $index) {
           <div class="review-item" [class.correct]="isCorrectAnswer(q.id, q.correctOptionId)"
                [class.incorrect]="!isCorrectAnswer(q.id, q.correctOptionId)">
             <div class="review-header">

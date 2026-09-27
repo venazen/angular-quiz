@@ -1,8 +1,9 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ALL_TESTS } from '../../data/tests';
-import { QuizTest } from '../../models/question.model';
+import { QuizQuestion, QuizTest } from '../../models/question.model';
 import { ProgressService } from '../../services/progress.service';
+import { shuffleArray } from './utils/shuffle';
 
 @Component({
   selector: 'app-quiz',
@@ -17,18 +18,23 @@ export class QuizComponent {
 
   // --- Signals: cijelo stanje komponente ---
   protected readonly test = signal<QuizTest | undefined>(undefined);
+
+  // Pitanja u IZMIJEŠANOM redoslijedu za TRENUTNI pokušaj — različit svaki put
+  // kad se test učita ili ponovi (retry()).
+  protected readonly shuffledQuestions = signal<QuizQuestion[]>([]);
+
   protected readonly currentIndex = signal(0);
 
-  // Bilježi izabran odgovor po pitanju (questionId -> optionId), ali NE otkriva tačnost.
+  // Bilježi izabran odgovor po pitanju (questionId -> optionId), ne otkriva tačnost.
   protected readonly answers = signal<Record<string, string>>({});
 
   protected readonly finished = signal(false);
 
   // --- Computed: izvedeno stanje ---
-  protected readonly currentQuestion = computed(() => this.test()?.questions[this.currentIndex()]);
+  protected readonly currentQuestion = computed(
+    () => this.shuffledQuestions()[this.currentIndex()],
+  );
 
-  // Izabran odgovor za TRENUTNO pitanje (ako postoji) — koristi se samo da se
-  // vidi koje dugme je selektovano, ne da li je tačno.
   protected readonly currentSelectedOptionId = computed(() => {
     const q = this.currentQuestion();
     if (!q) return null;
@@ -38,33 +44,32 @@ export class QuizComponent {
   protected readonly hasAnsweredCurrent = computed(() => this.currentSelectedOptionId() !== null);
 
   protected readonly progressPercent = computed(() => {
-    const t = this.test();
-    if (!t) return 0;
-    return Math.round((this.currentIndex() / t.questions.length) * 100);
+    const total = this.shuffledQuestions().length;
+    if (!total) return 0;
+    return Math.round((this.currentIndex() / total) * 100);
   });
 
-  protected readonly isLastQuestion = computed(() => {
-    const t = this.test();
-    return t ? this.currentIndex() === t.questions.length - 1 : false;
-  });
+  protected readonly isLastQuestion = computed(
+    () => this.currentIndex() === this.shuffledQuestions().length - 1,
+  );
 
   // Rezultat se računa TEK kad je test završen, poređenjem answers sa correctOptionId.
   protected readonly correctCount = computed(() => {
-    const t = this.test();
-    if (!t) return 0;
     const given = this.answers();
-    return t.questions.filter((q) => given[q.id] === q.correctOptionId).length;
+    return this.shuffledQuestions().filter((q) => given[q.id] === q.correctOptionId).length;
   });
 
   protected readonly finalScorePercent = computed(() => {
-    const t = this.test();
-    if (!t) return 0;
-    return Math.round((this.correctCount() / t.questions.length) * 100);
+    const total = this.shuffledQuestions().length;
+    if (!total) return 0;
+    return Math.round((this.correctCount() / total) * 100);
   });
 
   constructor() {
     const testId = this.route.snapshot.paramMap.get('id');
-    this.test.set(ALL_TESTS.find((t) => t.id === testId));
+    const found = ALL_TESTS.find((t) => t.id === testId);
+    this.test.set(found);
+    this.shuffledQuestions.set(shuffleArray(found?.questions ?? []));
   }
 
   selectOption(optionId: string): void {
@@ -80,7 +85,11 @@ export class QuizComponent {
       this.finished.set(true);
       const t = this.test();
       if (t) {
-        this.progressService.recordAttempt(t.id, this.correctCount(), t.questions.length);
+        this.progressService.recordAttempt(
+          t.id,
+          this.correctCount(),
+          this.shuffledQuestions().length,
+        );
       }
       return;
     }
@@ -94,12 +103,13 @@ export class QuizComponent {
   }
 
   retry(): void {
+    // Novo miješanje pri svakom ponavljanju — drugi redoslijed nego prošli put.
+    this.shuffledQuestions.set(shuffleArray(this.test()?.questions ?? []));
     this.currentIndex.set(0);
     this.answers.set({});
     this.finished.set(false);
   }
 
-  // Za review ekran na kraju — da li je dati odgovor za pitanje q tačan.
   isCorrectAnswer(questionId: string, correctOptionId: string): boolean {
     return this.answers()[questionId] === correctOptionId;
   }
