@@ -13,7 +13,7 @@
       @if (currentQuestion(); as q) {
         <h2 class="prompt">{{ q.prompt }}</h2>
 
-        @if (q.hint && !revealed()) {
+        @if (q.hint) {
           <p class="hint">💡 {{ q.hint }}</p>
         }
 
@@ -21,12 +21,7 @@
           @for (option of q.options; track option.id) {
             <button
               class="option"
-              [class.selected]="selectedOptionId() === option.id"
-              [class.correct]="revealed() && option.id === q.correctOptionId"
-              [class.incorrect]="
-                revealed() && selectedOptionId() === option.id && option.id !== q.correctOptionId
-              "
-              [disabled]="revealed()"
+              [class.selected]="currentSelectedOptionId() === option.id"
               (click)="selectOption(option.id)"
             >
               {{ option.text }}
@@ -34,26 +29,57 @@
           }
         </div>
 
-        @if (revealed()) {
-          <div class="explanation">
-            <strong>
-              {{ selectedOptionId() === q.correctOptionId ? '✔ Tačno!' : '✘ Netačno.' }}
-            </strong>
-            <p>{{ q.explanation }}</p>
-          </div>
-
-          <button class="btn-next" (click)="next()">
+        <div class="nav-actions">
+          <button class="btn-prev" (click)="previous()" [disabled]="currentIndex() === 0">
+            ← Prethodno
+          </button>
+          <button class="btn-next" (click)="next()" [disabled]="!hasAnsweredCurrent()">
             {{ isLastQuestion() ? 'Završi test' : 'Sljedeće pitanje' }}
           </button>
-        }
+        </div>
       }
     </div>
   } @else {
     <div class="result">
       <h2>Rezultat: {{ correctCount() }} / {{ t.questions.length }} ({{ finalScorePercent() }}%)</h2>
+
       <div class="result-actions">
         <button (click)="retry()">Ponovi test</button>
         <a routerLink="/" class="btn-link">Nazad na listu testova</a>
+      </div>
+
+      <div class="review-list">
+        @for (q of t.questions; track q.id; let i = $index) {
+          <div class="review-item" [class.correct]="isCorrectAnswer(q.id, q.correctOptionId)"
+               [class.incorrect]="!isCorrectAnswer(q.id, q.correctOptionId)">
+            <div class="review-header">
+              <span class="review-badge">
+                {{ isCorrectAnswer(q.id, q.correctOptionId) ? '✔' : '✘' }} Pitanje {{ i + 1 }}
+              </span>
+            </div>
+            <p class="review-prompt">{{ q.prompt }}</p>
+
+            <div class="review-options">
+              @for (option of q.options; track option.id) {
+                <div
+                  class="review-option"
+                  [class.was-selected]="givenAnswerFor(q.id) === option.id"
+                  [class.is-correct-option]="option.id === q.correctOptionId"
+                >
+                  {{ option.text }}
+                  @if (option.id === q.correctOptionId) {
+                    <span class="tag tag-correct">Tačan odgovor</span>
+                  }
+                  @if (givenAnswerFor(q.id) === option.id && option.id !== q.correctOptionId) {
+                    <span class="tag tag-incorrect">Tvoj odgovor</span>
+                  }
+                </div>
+              }
+            </div>
+
+            <p class="review-explanation">{{ q.explanation }}</p>
+          </div>
+        }
       </div>
     </div>
   }
