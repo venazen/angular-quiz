@@ -1,0 +1,64 @@
+@if (test(); as t) {
+  @if (!finished()) {
+    <div class="quiz">
+      <div class="quiz-header">
+        <a routerLink="/" class="back">← Nazad</a>
+        <span>{{ currentIndex() + 1 }} / {{ t.questions.length }}</span>
+      </div>
+
+      <div class="progress-bar">
+        <div class="progress-fill" [style.width.%]="progressPercent()"></div>
+      </div>
+
+      @if (currentQuestion(); as q) {
+        <h2 class="prompt">{{ q.prompt }}</h2>
+
+        @if (q.hint && !revealed()) {
+          <p class="hint">💡 {{ q.hint }}</p>
+        }
+
+        <div class="options">
+          @for (option of q.options; track option.id) {
+            <button
+              class="option"
+              [class.selected]="selectedOptionId() === option.id"
+              [class.correct]="revealed() && option.id === q.correctOptionId"
+              [class.incorrect]="
+                revealed() && selectedOptionId() === option.id && option.id !== q.correctOptionId
+              "
+              [disabled]="revealed()"
+              (click)="selectOption(option.id)"
+            >
+              {{ option.text }}
+            </button>
+          }
+        </div>
+
+        @if (revealed()) {
+          <div class="explanation">
+            <strong>
+              {{ selectedOptionId() === q.correctOptionId ? '✔ Tačno!' : '✘ Netačno.' }}
+            </strong>
+            <p>{{ q.explanation }}</p>
+          </div>
+
+          <button class="btn-next" (click)="next()">
+            {{ isLastQuestion() ? 'Završi test' : 'Sljedeće pitanje' }}
+          </button>
+        }
+      }
+    </div>
+  } @else {
+    <div class="result">
+      <h2>Rezultat: {{ correctCount() }} / {{ t.questions.length }} ({{ finalScorePercent() }}%)</h2>
+      <div class="result-actions">
+        <button (click)="retry()">Ponovi test</button>
+        <a routerLink="/" class="btn-link">Nazad na listu testova</a>
+      </div>
+    </div>
+  }
+} @else {
+  <p class="not-found">
+    Test nije pronađen. <a routerLink="/">Nazad na listu.</a>
+  </p>
+}

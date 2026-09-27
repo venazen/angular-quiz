@@ -1,0 +1,25 @@
+<div class="page">
+  <header>
+    <h1>Angular Quiz Trainer</h1>
+    <p>Testovi za savladavanje modernog Angular-a — Signals, standalone, zoneless i više.</p>
+  </header>
+
+  <div class="test-grid">
+    @for (test of tests; track test.id) {
+      <a [routerLink]="['/test', test.id]" class="test-card">
+        <h3>{{ test.title }}</h3>
+        <p>{{ test.description }}</p>
+        <div class="meta">
+          <span>{{ test.questions.length }} pitanja</span>
+          @if (progressService.getProgress(test.id); as progress) {
+            <span class="score">Najbolji rezultat: {{ progress.bestScore }}%</span>
+          } @else {
+            <span class="score muted">Još nisi probao</span>
+          }
+        </div>
+      </a>
+    } @empty {
+      <p>Još nema dodatih testova.</p>
+    }
+  </div>
+</div>
