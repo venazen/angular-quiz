@@ -3,6 +3,8 @@ import { test1StandaloneBasics } from './test-1-standalone-basics';
 import { test2SignalsFundamentals } from './test-2-signals-fundamentals';
 import { test3AdvancedSignals } from './test-3-advanced-signals';
 import { test4InterviewTricky } from './test-4-interview-tricky';
+import { test5AngularInterviewDeepDive } from './test-5-angular-interview-deep-dive';
+import { test6FrontendInterviewDeepDive } from './test-6-frontend-interview-deep-dive';
 
 // Dodaj svaki novi test ovdje kad ga napravimo (Test 2: Signals, Test 3: itd.)
-export const ALL_TESTS: QuizTest[] = [test1StandaloneBasics, test2SignalsFundamentals, test3AdvancedSignals, test4InterviewTricky];
+export const ALL_TESTS: QuizTest[] = [test1StandaloneBasics, test2SignalsFundamentals, test3AdvancedSignals, test4InterviewTricky, test5AngularInterviewDeepDive, test6FrontendInterviewDeepDive];
